@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Squared Away — App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0D1B2A; --navy-mid: #162437; --navy-light: #1E3048;
+      --teal: #00B894; --teal-dim: #00926f;
+      --teal-glow: rgba(0,184,148,0.12); --teal-border: rgba(0,184,148,0.25);
+      --cream: #FAF9F6; --text: #E8EDF2; --text-muted: #7A93AE;
+      --danger: #E05252; --warning: #F0A500; --amber: #F59E0B;
+      --border: rgba(255,255,255,0.07); --radius: 12px; --radius-sm: 8px;
+    }
+    html, body, #root { height: 100%; background: var(--navy); color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+    /* AUTH */
+    .auth-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 20px; background: radial-gradient(ellipse at 50% 0%, rgba(0,184,148,0.07) 0%, transparent 65%); overflow-y: auto; }
+    .auth-back { align-self: flex-start; color: var(--text-muted); text-decoration: none; font-size: 13px; margin-bottom: 24px; display: flex; align-items: center; gap: 6px; }
+    .auth-back:hover { color: var(--teal); }
+    .auth-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: 0.04em; color: var(--cream); margin-bottom: 3px; }
+    .auth-logo span { color: var(--teal); }
+    .auth-tagline { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 28px; letter-spacing: 0.04em; text-align: center; }
+    .auth-box { width: 100%; max-width: 380px; }
+    .auth-tabs { display: flex; gap: 4px; background: var(--navy-mid); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 20px; }
+    .auth-tab { flex: 1; padding: 9px; border: none; background: transparent; color: var(--text-muted); font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .auth-tab.active { background: var(--navy-light); color: var(--teal); }
+    .auth-form { display: flex; flex-direction: column; gap: 12px; }
+    .auth-input { width: 100%; padding: 13px 16px; background: var(--navy-mid); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; outline: none; transition: border 0.15s; }
+    .auth-input:focus { border-color: var(--teal-border); }
+    .auth-input::placeholder { color: var(--text-muted); }
+    .auth-btn { width: 100%; padding: 14px; background: var(--teal); border: none; border-radius: var(--radius-sm); color: var(--navy); font-size: 15px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; }
+    .auth-btn:hover { opacity: 0.88; }
+    .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .auth-err { color: var(--danger); font-size: 13px; text-align: center; padding: 10px; background: rgba(224,82,82,0.1); border-radius: var(--radius-sm); }
+    .auth-ok { color: var(--teal); font-size: 13px; text-align: center; padding: 10px; background: var(--teal-glow); border-radius: var(--radius-sm); }
+    .auth-features { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+    .auth-pill { font-size: 11px; padding: 5px 10px; background: var(--teal-glow); border: 1px solid var(--teal-border); border-radius: 20px; color: var(--teal); }
+
+    /* FOUNDING BANNER - auth screen */
+    .founding-banner { background: linear-gradient(135deg, #0a2e1f 0%, #0f2d24 100%); border: 1px solid rgba(0,184,148,0.35); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; position: relative; overflow: hidden; }
+    .founding-banner::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--teal), transparent); }
+    .founding-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,184,148,0.15); border: 1px solid rgba(0,184,148,0.3); border-radius: 20px; padding: 3px 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); width: fit-content; margin-bottom: 10px; }
+    .founding-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--cream); line-height: 1.15; margin-bottom: 8px; }
+    .founding-title span { color: var(--teal); }
+    .founding-perks { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .founding-perk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); }
+    .founding-perk::before { content: '✓'; color: var(--teal); font-weight: 700; font-size: 12px; width: 14px; flex-shrink: 0; }
+    .founding-cta { display: block; width: 100%; background: var(--teal); color: var(--navy); font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; text-decoration: none; padding: 13px 20px; border-radius: var(--radius-sm); border: none; cursor: pointer; margin-bottom: 8px; transition: opacity 0.15s; }
+    .founding-cta:hover { opacity: 0.88; }
+    .founding-spots { text-align: center; font-size: 11px; color: var(--teal); opacity: 0.7; letter-spacing: 0.05em; }
+
+    /* APP SHELL */
+    .app-wrap { max-width: 480px; margin: 0 auto; padding: 0 16px 90px; min-height: 100vh; }
+    .app-header { display: flex; align-items: center; gap: 10px; padding: 18px 0 12px; }
+    .mark { width: 28px; height: 28px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; flex: none; }
+    .mark span { border-radius: 3px; background: var(--teal-dim); }
+    .mark span:nth-child(1), .mark span:nth-child(4) { background: var(--teal); }
+    .app-header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.04em; }
+    .app-header h1 em { font-style: normal; color: var(--teal); }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .plan-chip { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    .plan-free { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+    .plan-pro { background: var(--teal-glow); color: var(--teal); border: 1px solid var(--teal-border); }
+    .plan-elite { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+    .sign-out-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+    .sign-out-btn:hover { color: var(--text); }
+
+    /* BOTTOM NAV */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy-mid); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 14px; border: none; background: transparent; color: var(--text-muted); font-size: 10px; letter-spacing: 0.04em; cursor: pointer; transition: color 0.15s; }
+    .nav-item.active { color: var(--teal); }
+    .nav-icon { font-size: 20px; line-height: 1; }
+
+    /* CARDS */
+    .card { background: var(--navy-mid); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+    .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+    .big-num { font-family: 'Barlow Condensed', sans-serif; font-size: 2.8rem; font-weight: 800; color: var(--teal); line-height: 1; }
+    .big-num.red { color: var(--danger); }
+    .big-num-label { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { font-size: 13px; color: var(--text-muted); }
+    .stat-val { font-size: 14px; font-weight: 600; color: var(--text); }
+    .stat-val.teal { color: var(--teal); }
+    .stat-val.red { color: var(--danger); }
+    .stat-val.amber { color: var(--amber); }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 18px; border-radius: var(--radius-sm); border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; text-decoration: none; }
+    .btn-teal { background: var(--teal); color: var(--navy); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-danger { background: rgba(224,82,82,0.12); color: var(--danger); border: 1px solid rgba(224,82,82,0.2); }
+    .btn:hover { opacity: 0.85; }
+    .btn-full { width: 100%; }
+
+    /* FORM */
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; padding: 12px 14px; background: var(--navy-light); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; outline: none; transition: border 0.15s; }
+    .form-input:focus { border-color: var(--teal-border); }
+    .form-input::placeholder { color: var(--text-muted); }
+    select.form-input { cursor: pointer; }
+    select.form-input option { background: var(--navy-mid); }
+
+    /* SECTION HEADER */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-top: 6px; }
+    .section-head h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.03em; }
+
+    /* LIST */
+    .list-item { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .list-item:last-child { border-bottom: none; }
+    .list-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; background: var(--navy-light); }
+    .list-body { flex: 1; }
+    .list-title { font-size: 14px; font-weight: 500; color: var(--text); }
+    .list-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .list-amount { font-size: 15px; font-weight: 700; color: var(--text); }
+    .list-amount.teal { color: var(--teal); }
+    .list-delete { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 4px; opacity: 0.5; }
+    .list-delete:hover { opacity: 1; color: var(--danger); }
+
+    /* UPGRADE / PAYMENT PAGE */
+    .upgrade-page { padding: 8px 0; }
+    .upgrade-founding {
+      background: linear-gradient(135deg, #071d12 0%, #0a2318 100%);
+      border: 1px solid rgba(0,184,148,0.35);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+    .upgrade-founding::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--teal), transparent); }
+    .upgrade-founding .uf-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,184,148,0.15); border: 1px solid rgba(0,184,148,0.3); border-radius: 20px; padding: 4px 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; }
+    .upgrade-founding h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--cream); line-height: 1.1; margin-bottom: 10px; }
+    .upgrade-founding h3 span { color: var(--teal); }
+    .upgrade-founding p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+    .upgrade-founding .uf-perks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; text-align: left; }
+    .upgrade-founding .uf-perk { font-size: 12.5px; color: var(--text); display: flex; align-items: flex-start; gap: 7px; }
+    .upgrade-founding .uf-perk::before { content: '✓'; color: var(--teal); font-weight: 700; flex-shrink: 0; }
+    .upgrade-founding .uf-cta { display: block; background: var(--teal); color: var(--navy); font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; text-decoration: none; padding: 14px 20px; border-radius: var(--radius-sm); margin-bottom: 8px; transition: opacity 0.15s; }
+    .upgrade-founding .uf-cta:hover { opacity: 0.88; }
+    .upgrade-founding .uf-note { font-size: 11px; color: var(--teal); opacity: 0.7; }
+    .divider-or { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider-or::before, .divider-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider-or span { font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em; }
+    .monthly-options { display: flex; flex-direction: column; gap: 12px; }
+    .monthly-card { background: var(--navy-mid); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; transition: border-color 0.15s; }
+    .monthly-card:hover { border-color: var(--teal-border); }
+    .monthly-card.elite-card:hover { border-color: rgba(245,158,11,0.3); }
+    .monthly-info { flex: 1; }
+    .monthly-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--cream); letter-spacing: 0.03em; margin-bottom: 3px; }
+    .monthly-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .monthly-price { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--teal); white-space: nowrap; }
+    .monthly-price.elite-price { color: var(--amber); }
+    .monthly-arrow { color: var(--text-muted); font-size: 16px; }
+
+    /* IN-APP COMPACT FOUNDING BANNER */
+    .iaf-banner { background: linear-gradient(135deg, #0a2e1f 0%, #0d2b1e 100%); border: 1px solid rgba(0,184,148,0.3); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; position: relative; overflow: hidden; }
+    .iaf-banner::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--teal), transparent); }
+    .iaf-row { display: flex; align-items: center; gap: 12px; }
+    .iaf-text { flex: 1; }
+    .iaf-badge-sm { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 3px; }
+    .iaf-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; color: var(--cream); line-height: 1.2; margin-bottom: 2px; }
+    .iaf-sub { font-size: 11.5px; color: var(--text-muted); }
+    .iaf-sub strong { color: var(--teal); }
+    .iaf-btn { display: inline-block; background: var(--teal); color: var(--navy); font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; text-decoration: none; padding: 9px 13px; border-radius: var(--radius-sm); white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s; }
+    .iaf-btn:hover { opacity: 0.88; }
+
+    /* PAYWALL */
+    .paywall-banner { background: linear-gradient(135deg, var(--navy-light), var(--navy-mid)); border: 1px solid var(--teal-border); border-radius: var(--radius); padding: 20px; text-align: center; margin: 14px 0; }
+    .paywall-banner h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .paywall-banner p { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* MISC */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--teal); color: var(--navy); padding: 10px 22px; border-radius: 20px; font-weight: 700; font-size: 13px; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .text-muted { color: var(--text-muted); font-size: 13px; }
+    .mt14 { margin-top: 14px; }
+    .flex-row { display: flex; gap: 10px; }
+    .flex-row .form-group { flex: 1; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { createClient } = supabase;
+const { useState, useEffect } = React;
+
+const SUPABASE_URL = 'https://smtqpnmxldstrqvvjqag.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_QA17ilYnRjRSYl6aJ9EkLQ_Fx5rOscY';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const STRIPE_PRO      = 'https://buy.stripe.com/4gMdR8buL8cveuA0fW33W01';
+const STRIPE_ELITE    = 'https://buy.stripe.com/fZu3cu8izboH728bYE33W02';
+const STRIPE_FOUNDING = 'https://buy.stripe.com/8x2eVc8iz2Sbcms0fW33W03';
+
+const fmt = n => '£' + Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const PA = 12570, MR1 = 0.45, MR2 = 0.25, MT = 10000;
+
+function FoundingBannerAuth() {
+  return (
+    <div className="founding-banner">
+      <div className="founding-badge">⚡ Founding Member Offer</div>
+      <div className="founding-title">Lifetime Pro access.<br/><span>One payment. No fees. Ever.</span></div>
+      <div style={{fontSize:'13px',color:'var(--text-muted)',lineHeight:'1.55',marginBottom:'12px'}}>
+        100 spots only — lock in forever before monthly billing starts.
+      </div>
+      <div className="founding-perks">
+        <div className="founding-perk">Unlimited CIS &amp; expense tracking</div>
+        <div className="founding-perk">Live tax &amp; refund estimate</div>
+        <div className="founding-perk">MTD-ready digital records</div>
+      </div>
+      <a href={STRIPE_FOUNDING} target="_blank" rel="noopener noreferrer" className="founding-cta">Claim Your Founding Spot →</a>
+      <div className="founding-spots">100 spots only · First come, first served</div>
+    </div>
+  );
+}
+
+function InAppBanner() {
+  return (
+    <div className="iaf-banner">
+      <div className="iaf-row">
+        <div className="iaf-text">
+          <div className="iaf-badge-sm">⚡ Founding Member</div>
+          <div className="iaf-title">Lifetime Pro — one payment</div>
+          <div className="iaf-sub">100 spots. <strong>Lock in forever</strong> before monthly billing.</div>
+        </div>
+        <a href={STRIPE_FOUNDING} target="_blank" rel="noopener noreferrer" className="iaf-btn">Claim →</a>
+      </div>
+    </div>
+  );
+}
+
+function Auth() {
+  const [tab, setTab] = useState('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [trade, setTrade] = useState('Scaffolder');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [isErr, setIsErr] = useState(false);
+
+  const show = (m, err=false) => { setMsg(m); setIsErr(err); };
+
+  const submit = async () => {
+    setLoading(true); setMsg(null);
+    if (tab === 'signin') {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) show(error.message, true);
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) show(error.message, true);
+      else {
+        if (data.user) await sb.from('profiles').upsert({ id: data.user.id, email, trade, plan: 'free' });
+        show('Check your email to confirm your account.');
+      }
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="auth-wrap">
+      <a href="/" className="auth-back">← Back to site</a>
+      <div className="auth-logo">SQUARED <span>AWAY</span></div>
+      <div className="auth-tagline">CIS TAX &amp; EXPENSES · MTD READY</div>
+      <div className="auth-box">
+        <FoundingBannerAuth />
+        <div className="auth-features">
+          <span className="auth-pill">CIS Tracker</span>
+          <span className="auth-pill">Tax Estimate</span>
+          <span className="auth-pill">Mileage</span>
+          <span className="auth-pill">MTD Ready</span>
+        </div>
+        <div className="auth-tabs">
+          <button className={`auth-tab ${tab==='signin'?'active':''}`} onClick={()=>setTab('signin')}>Sign In</button>
+          <button className={`auth-tab ${tab==='signup'?'active':''}`} onClick={()=>setTab('signup')}>Sign Up</button>
+        </div>
+        <div className="auth-form">
+          <input className="auth-input" type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)} />
+          <input className="auth-input" type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
+          {tab==='signup' && (
+            <select className="auth-input" value={trade} onChange={e=>setTrade(e.target.value)}>
+              {['Scaffolder','Electrician','Plumber','Carpenter','Bricklayer','Plasterer','Painter','General Labourer','Other'].map(t=><option key={t}>{t}</option>)}
+            </select>
+          )}
+          {msg && <div className={isErr?'auth-err':'auth-ok'}>{msg}</div>}
+          <button className="auth-btn" onClick={submit} disabled={loading}>{loading?'Please wait…':tab==='signin'?'Sign In':'Create Account'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ profile, records, expenses, mileage, setTab }) {
+  const tGross = records.reduce((s,r)=>s+(r.gross||0),0);
+  const tDed   = records.reduce((s,r)=>s+(r.deducted||0),0);
+  const tExp   = expenses.reduce((s,e)=>s+(e.amount||0),0);
+  const tMi    = mileage.reduce((s,m)=>s+(m.miles||0),0);
+  const miClaim = tMi<=MT ? tMi*MR1 : MT*MR1+(tMi-MT)*MR2;
+  const taxable = Math.max(0, tGross - tExp - miClaim - PA);
+  const itax = taxable<=37700 ? taxable*0.20 : 37700*0.20+(taxable-37700)*0.40;
+  const ni = Math.max(0,(Math.min(tGross,50270)-12570))*0.06;
+  const due = itax+ni;
+  const roe = tDed - due;
+
+  return (
+    <div>
+      <div className="section-head"><h2>Dashboard</h2><span className="text-muted">2026/27</span></div>
+      {profile?.plan==='free' && <InAppBanner />}
+      <div className="card">
+        <div className="card-title">Estimated {roe>=0?'Refund':'Tax Owed'}</div>
+        <div className={`big-num ${roe<0?'red':''}`}>{fmt(Math.abs(roe))}</div>
+        <div className="big-num-label">{roe>=0?'You may be owed a refund':'You may owe tax'} · estimate only</div>
+      </div>
+      <div className="card">
+        <div className="stat-row"><span className="stat-label">Gross Income</span><span className="stat-val">{fmt(tGross)}</span></div>
+        <div className="stat-row"><span className="stat-label">CIS Deducted</span><span className="stat-val teal">{fmt(tDed)}</span></div>
+        <div className="stat-row"><span className="stat-label">Expenses Claimed</span><span className="stat-val">{fmt(tExp)}</span></div>
+        <div className="stat-row"><span className="stat-label">Mileage Claim</span><span className="stat-val">{fmt(miClaim)}</span></div>
+        <div className="stat-row"><span className="stat-label">Taxable Income</span><span className="stat-val">{fmt(taxable)}</span></div>
+        <div className="stat-row"><span className="stat-label">Tax Due</span><span className="stat-val red">{fmt(due)}</span></div>
+      </div>
+    </div>
+  );
+}
+
+function Expenses({ user, profile, expenses, onAdd, onDelete, setTab }) {
+  const [desc,setDesc]=useState(''); const [amount,setAmount]=useState(''); const [cat,setCat]=useState('Tools & Equipment'); const [adding,setAdding]=useState(false);
+  const cats=['Tools & Equipment','PPE','Vehicle Costs','Phone & Data','Training','Clothing','Insurance','Subsistence','Other'];
+  const add=async()=>{ if(!desc||!amount)return; setAdding(true); await onAdd({description:desc,amount:parseFloat(amount),category:cat,user_id:user.id}); setDesc('');setAmount('');setAdding(false); };
+  const limit=5; const isFree=profile?.plan==='free';
+  return (
+    <div>
+      <div className="section-head"><h2>Expenses</h2></div>
+      {isFree&&expenses.length>=limit?(
+        <div className="paywall-banner">
+          <h3>Unlock Unlimited Expenses</h3>
+          <p>Free plan is limited to {limit} expenses. Upgrade to track everything.</p>
+          <button className="btn btn-teal btn-full" onClick={()=>setTab('upgrade')}>Upgrade →</button>
+        </div>
+      ):(
+        <div className="card">
+          <div className="card-title">Add Expense</div>
+          <div className="form-group"><label className="form-label">Description</label><input className="form-input" placeholder="e.g. New drill bits" value={desc} onChange={e=>setDesc(e.target.value)} /></div>
+          <div className="flex-row">
+            <div className="form-group"><label className="form-label">Amount (£)</label><input className="form-input" type="number" placeholder="0.00" value={amount} onChange={e=>setAmount(e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">Category</label><select className="form-input" value={cat} onChange={e=>setCat(e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</select></div>
+          </div>
+          <button className="btn btn-teal btn-full" onClick={add} disabled={adding}>{adding?'Saving…':'Add Expense'}</button>
+        </div>
+      )}
+      <div className="card">
+        {expenses.length===0?(<div className="empty-state"><div className="empty-icon">🧾</div><p>No expenses logged yet.<br/>Add your first one above.</p></div>):
+        expenses.map(e=>(
+          <div className="list-item" key={e.id}>
+            <div className="list-icon">🧾</div>
+            <div className="list-body"><div className="list-title">{e.description}</div><div className="list-sub">{e.category}</div></div>
+            <div className="list-amount">{fmt(e.amount)}</div>
+            <button className="list-delete" onClick={()=>onDelete('expenses',e.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Mileage({ user, mileage, onAdd, onDelete }) {
+  const [desc,setDesc]=useState(''); const [miles,setMiles]=useState(''); const [adding,setAdding]=useState(false);
+  const add=async()=>{ if(!miles)return; setAdding(true); await onAdd({description:desc||'Business journey',miles:parseFloat(miles),user_id:user.id}); setDesc('');setMiles('');setAdding(false); };
+  const tMi=mileage.reduce((s,m)=>s+(m.miles||0),0);
+  const tClaim=tMi<=MT?tMi*MR1:MT*MR1+(tMi-MT)*MR2;
+  return (
+    <div>
+      <div className="section-head"><h2>Mileage</h2></div>
+      <div className="card">
+        <div className="stat-row"><span className="stat-label">Total Miles</span><span className="stat-val">{tMi.toFixed(1)}</span></div>
+        <div className="stat-row"><span className="stat-label">HMRC Claim</span><span className="stat-val teal">{fmt(tClaim)}</span></div>
+        <div className="stat-row"><span className="stat-label">Rate</span><span className="stat-val">45p/mile (first 10,000)</span></div>
+      </div>
+      <div className="card">
+        <div className="card-title">Log Journey</div>
+        <div className="form-group"><label className="form-label">Description</label><input className="form-input" placeholder="e.g. Site visit — Manchester" value={desc} onChange={e=>setDesc(e.target.value)} /></div>
+        <div className="form-group"><label className="form-label">Miles</label><input className="form-input" type="number" placeholder="0" value={miles} onChange={e=>setMiles(e.target.value)} /></div>
+        <button className="btn btn-teal btn-full" onClick={add} disabled={adding}>{adding?'Saving…':'Log Miles'}</button>
+      </div>
+      <div className="card">
+        {mileage.length===0?(<div className="empty-state"><div className="empty-icon">🚐</div><p>No journeys logged yet.</p></div>):
+        mileage.map(m=>(
+          <div className="list-item" key={m.id}>
+            <div className="list-icon">🚐</div>
+            <div className="list-body"><div className="list-title">{m.description}</div><div className="list-sub">{m.miles} miles</div></div>
+            <div className="list-amount teal">{fmt(m.miles*MR1)}</div>
+            <button className="list-delete" onClick={()=>onDelete('mileage',m.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CISRecords({ user, records, onAdd, onDelete }) {
+  const [contractor,setContractor]=useState(''); const [gross,setGross]=useState(''); const [deducted,setDeducted]=useState(''); const [date,setDate]=useState(''); const [adding,setAdding]=useState(false);
+  const gn=parseFloat(gross)||0; const autoD=(gn*0.20).toFixed(2);
+  const add=async()=>{ if(!contractor||!gross)return; setAdding(true); await onAdd({contractor,gross:parseFloat(gross),deducted:parseFloat(deducted||autoD),date:date||new Date().toISOString().split('T')[0],user_id:user.id}); setContractor('');setGross('');setDeducted('');setDate('');setAdding(false); };
+  return (
+    <div>
+      <div className="section-head"><h2>CIS Records</h2></div>
+      <div className="card">
+        <div className="card-title">Add Payment</div>
+        <div className="form-group"><label className="form-label">Contractor / Company</label><input className="form-input" placeholder="e.g. ABC Contractors Ltd" value={contractor} onChange={e=>setContractor(e.target.value)} /></div>
+        <div className="flex-row">
+          <div className="form-group"><label className="form-label">Gross (£)</label><input className="form-input" type="number" placeholder="0.00" value={gross} onChange={e=>setGross(e.target.value)} /></div>
+          <div className="form-group"><label className="form-label">CIS Deducted (£)</label><input className="form-input" type="number" placeholder={gn?autoD:'0.00'} value={deducted} onChange={e=>setDeducted(e.target.value)} /></div>
+        </div>
+        <div className="form-group"><label className="form-label">Date</label><input className="form-input" type="date" value={date} onChange={e=>setDate(e.target.value)} /></div>
+        <button className="btn btn-teal btn-full" onClick={add} disabled={adding}>{adding?'Saving…':'Add Record'}</button>
+      </div>
+      <div className="card">
+        {records.length===0?(<div className="empty-state"><div className="empty-icon">📋</div><p>No CIS records yet.<br/>Add your first payment above.</p></div>):
+        records.map(r=>(
+          <div className="list-item" key={r.id}>
+            <div className="list-icon">📋</div>
+            <div className="list-body"><div className="list-title">{r.contractor}</div><div className="list-sub">{r.date} · Deducted: {fmt(r.deducted)}</div></div>
+            <div className="list-amount">{fmt(r.gross)}</div>
+            <button className="list-delete" onClick={()=>onDelete('cis_records',r.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TaxSummary({ records, expenses, mileage }) {
+  const tGross=records.reduce((s,r)=>s+(r.gross||0),0);
+  const tDed=records.reduce((s,r)=>s+(r.deducted||0),0);
+  const tExp=expenses.reduce((s,e)=>s+(e.amount||0),0);
+  const tMi=mileage.reduce((s,m)=>s+(m.miles||0),0);
+  const miClaim=tMi<=MT?tMi*MR1:MT*MR1+(tMi-MT)*MR2;
+  const taxable=Math.max(0,tGross-tExp-miClaim-PA);
+  const itax=taxable<=37700?taxable*0.20:37700*0.20+(taxable-37700)*0.40;
+  const ni=Math.max(0,(Math.min(tGross,50270)-12570))*0.06;
+  const due=itax+ni; const roe=tDed-due;
+  const mtd=tGross>=50000?'You are above the £50k MTD threshold — now required.':tGross>=30000?'You will hit the £30k threshold (April 2027).':'You are below current MTD thresholds.';
+  return (
+    <div>
+      <div className="section-head"><h2>Tax Summary</h2></div>
+      <div className="card">
+        <div className="card-title">2026/27 Estimate</div>
+        <div className="stat-row"><span className="stat-label">Gross Income</span><span className="stat-val">{fmt(tGross)}</span></div>
+        <div className="stat-row"><span className="stat-label">Less: Expenses</span><span className="stat-val red">−{fmt(tExp)}</span></div>
+        <div className="stat-row"><span className="stat-label">Less: Mileage</span><span className="stat-val red">−{fmt(miClaim)}</span></div>
+        <div className="stat-row"><span className="stat-label">Less: Personal Allowance</span><span className="stat-val red">−{fmt(PA)}</span></div>
+        <div className="stat-row"><span className="stat-label">Taxable Income</span><span className="stat-val">{fmt(taxable)}</span></div>
+        <div className="divider"></div>
+        <div className="stat-row"><span className="stat-label">Income Tax (20%)</span><span className="stat-val red">{fmt(itax)}</span></div>
+        <div className="stat-row"><span className="stat-label">Class 4 NI (6%)</span><span className="stat-val red">{fmt(ni)}</span></div>
+        <div className="stat-row"><span className="stat-label">Total Tax Due</span><span className="stat-val red">{fmt(due)}</span></div>
+        <div className="stat-row"><span className="stat-label">CIS Already Deducted</span><span className="stat-val teal">{fmt(tDed)}</span></div>
+        <div className="divider"></div>
+        <div className="stat-row">
+          <span className="stat-label" style={{fontWeight:600,color:'var(--text)'}}>{roe>=0?'✅ Estimated Refund':'⚠️ Estimated Owed'}</span>
+          <span className={`stat-val ${roe>=0?'teal':'red'}`} style={{fontSize:'1.1rem'}}>{fmt(Math.abs(roe))}</span>
+        </div>
+      </div>
+      <div className="card"><div className="card-title">MTD Status</div><div className="text-muted" style={{marginTop:'8px'}}>{mtd}</div></div>
+    </div>
+  );
+}
+
+function Upgrade() {
+  return (
+    <div>
+      <div className="section-head"><h2>Upgrade</h2></div>
+      <div className="upgrade-page">
+        <div className="upgrade-founding">
+          <div className="uf-badge">⚡ Founding Member Offer</div>
+          <h3>Lifetime Pro access.<br/><span>One payment. No fees. Ever.</span></h3>
+          <p>100 founding member spots — lock in forever before monthly billing starts. Built for subbies who want to stay ahead of their tax.</p>
+          <div className="uf-perks">
+            <div className="uf-perk">Unlimited CIS records</div>
+            <div className="uf-perk">Unlimited expenses</div>
+            <div className="uf-perk">Mileage tracker</div>
+            <div className="uf-perk">Full tax estimate</div>
+            <div className="uf-perk">MTD-ready records</div>
+            <div className="uf-perk">All future Pro features</div>
+            <div className="uf-perk">Priority support</div>
+            <div className="uf-perk">Roadmap input</div>
+          </div>
+          <a href={STRIPE_FOUNDING} target="_blank" rel="noopener noreferrer" className="uf-cta">Claim Your Founding Spot →</a>
+          <div className="uf-note">100 founding spots only · First come, first served</div>
+        </div>
+
+        <div className="divider-or"><span>OR CHOOSE MONTHLY</span></div>
+
+        <div className="monthly-options">
+          <a href={STRIPE_PRO} target="_blank" rel="noopener noreferrer" className="monthly-card">
+            <div className="monthly-info">
+              <div className="monthly-name">Pro</div>
+              <div className="monthly-desc">Unlimited tracking, full tax summary, MTD-ready records</div>
+            </div>
+            <div className="monthly-price">£7.99<span style={{fontSize:'0.75rem',color:'var(--text-muted)',fontFamily:'Inter',fontWeight:400}}>/mo</span></div>
+            <div className="monthly-arrow">→</div>
+          </a>
+          <a href={STRIPE_ELITE} target="_blank" rel="noopener noreferrer" className="monthly-card elite-card">
+            <div className="monthly-info">
+              <div className="monthly-name">Elite</div>
+              <div className="monthly-desc">Everything in Pro plus priority support and early feature access</div>
+            </div>
+            <div className="monthly-price elite-price">£24.99<span style={{fontSize:'0.75rem',color:'var(--text-muted)',fontFamily:'Inter',fontWeight:400}}>/mo</span></div>
+            <div className="monthly-arrow">→</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Profile({ user, profile, onSignOut, setTab }) {
+  const plan = profile?.plan || 'free';
+  return (
+    <div>
+      <div className="section-head"><h2>Account</h2></div>
+      <div className="card">
+        <div className="stat-row"><span className="stat-label">Email</span><span className="stat-val" style={{fontSize:'13px'}}>{user.email}</span></div>
+        <div className="stat-row"><span className="stat-label">Trade</span><span className="stat-val">{profile?.trade||'—'}</span></div>
+        <div className="stat-row"><span className="stat-label">Plan</span><span className={`plan-chip plan-${plan}`}>{plan}</span></div>
+      </div>
+      {plan==='free' && (
+        <button className="btn btn-teal btn-full mt14" onClick={()=>setTab('upgrade')}>View Upgrade Options →</button>
+      )}
+      <button className="btn btn-danger btn-full mt14" onClick={onSignOut}>Sign Out</button>
+      <div style={{textAlign:'center',marginTop:'20px'}}>
+        <a href="/" style={{fontSize:'12px',color:'var(--text-muted)',textDecoration:'none'}}>← Back to website</a>
+      </div>
+    </div>
+  );
+}
+
+function Toast({ msg }) { return msg ? <div className="toast">{msg}</div> : null; }
+
+function App() {
+  const [session,setSession]=useState(null);
+  const [profile,setProfile]=useState(null);
+  const [tab,setTab]=useState('dashboard');
+  const [records,setRecords]=useState([]);
+  const [expenses,setExpenses]=useState([]);
+  const [mileage,setMileage]=useState([]);
+  const [toast,setToast]=useState('');
+  const [loading,setLoading]=useState(true);
+
+  const showToast=m=>{ setToast(m); setTimeout(()=>setToast(''),2500); };
+
+  useEffect(()=>{
+    sb.auth.getSession().then(({data})=>{ setSession(data.session); setLoading(false); });
+    const {data:{subscription}}=sb.auth.onAuthStateChange((_e,s)=>{ setSession(s); setLoading(false); });
+    return ()=>subscription.unsubscribe();
+  },[]);
+
+  useEffect(()=>{
+    if(!session)return;
+    const uid=session.user.id;
+    sb.from('profiles').select('*').eq('id',uid).single().then(({data})=>setProfile(data));
+    sb.from('cis_records').select('*').eq('user_id',uid).order('date',{ascending:false}).then(({data})=>setRecords(data||[]));
+    sb.from('expenses').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(({data})=>setExpenses(data||[]));
+    sb.from('mileage').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(({data})=>setMileage(data||[]));
+  },[session]);
+
+  const handleAdd=async(table,row)=>{
+    const {data,error}=await sb.from(table).insert(row).select().single();
+    if(error){showToast('Error saving.');return;}
+    if(table==='cis_records')setRecords(p=>[data,...p]);
+    if(table==='expenses')setExpenses(p=>[data,...p]);
+    if(table==='mileage')setMileage(p=>[data,...p]);
+    showToast('Saved ✓');
+  };
+
+  const handleDelete=async(table,id)=>{
+    await sb.from(table).delete().eq('id',id);
+    if(table==='cis_records')setRecords(p=>p.filter(r=>r.id!==id));
+    if(table==='expenses')setExpenses(p=>p.filter(r=>r.id!==id));
+    if(table==='mileage')setMileage(p=>p.filter(r=>r.id!==id));
+    showToast('Deleted');
+  };
+
+  const signOut=async()=>{ await sb.auth.signOut(); setSession(null); setProfile(null); setRecords([]); setExpenses([]); setMileage([]); };
+
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--teal)',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'1.5rem',letterSpacing:'.1em'}}>LOADING…</div>;
+  if(!session) return <Auth />;
+
+  const plan=profile?.plan||'free';
+
+  const navItems=[
+    {id:'dashboard',icon:'📊',label:'Home'},
+    {id:'cis',icon:'📋',label:'CIS'},
+    {id:'expenses',icon:'🧾',label:'Expenses'},
+    {id:'mileage',icon:'🚐',label:'Mileage'},
+    {id:'tax',icon:'💷',label:'Tax'},
+    {id:'upgrade',icon:'⚡',label:'Upgrade'},
+    {id:'profile',icon:'👤',label:'Account'},
+  ];
+
+  return (
+    <div>
+      <div className="app-wrap">
+        <header className="app-header">
+          <div className="mark"><span/><span/><span/><span/></div>
+          <h1>SQUARED <em>AWAY</em></h1>
+          <div className="header-right">
+            <span className={`plan-chip plan-${plan}`}>{plan}</span>
+            <button className="sign-out-btn" onClick={signOut}>Sign out</button>
+          </div>
+        </header>
+
+        {tab==='dashboard' && <Dashboard profile={profile} records={records} expenses={expenses} mileage={mileage} setTab={setTab} />}
+        {tab==='expenses'  && <Expenses user={session.user} profile={profile} expenses={expenses} onAdd={r=>handleAdd('expenses',r)} onDelete={handleDelete} setTab={setTab} />}
+        {tab==='mileage'   && <Mileage user={session.user} mileage={mileage} onAdd={r=>handleAdd('mileage',r)} onDelete={handleDelete} />}
+        {tab==='cis'       && <CISRecords user={session.user} records={records} onAdd={r=>handleAdd('cis_records',r)} onDelete={handleDelete} />}
+        {tab==='tax'       && <TaxSummary records={records} expenses={expenses} mileage={mileage} />}
+        {tab==='upgrade'   && <Upgrade />}
+        {tab==='profile'   && <Profile user={session.user} profile={profile} onSignOut={signOut} setTab={setTab} />}
+      </div>
+
+      <nav className="bottom-nav">
+        {navItems.map(n=>(
+          <button key={n.id} className={`nav-item ${tab===n.id?'active':''}`} onClick={()=>setTab(n.id)}>
+            <span className="nav-icon">{n.icon}</span>
+            {n.label}
+          </button>
+        ))}
+      </nav>
+
+      <Toast msg={toast} />
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
