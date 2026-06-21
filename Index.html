@@ -1,1 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Squared Away — CIS Tax & Expenses for Subbies</title>
+  <meta name="description" content="The CIS tax and expenses tracker built for self-employed subcontractors. Track income, claim expenses, and stay MTD-ready. Built by a tradesman, for tradesmen." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0D1B2A; --navy-mid: #162437; --navy-light: #1E3048;
+      --teal: #00B894; --teal-dim: #00926f;
+      --teal-glow: rgba(0,184,148,0.10); --teal-border: rgba(0,184,148,0.25);
+      --cream: #F0EDE6; --text: #D8E4EF; --text-muted: #6A8AA0;
+      --border: rgba(255,255,255,0.07); --radius: 12px;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--navy); color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
 
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,27,42,0.93); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 60px;
+    }
+    .nav-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; letter-spacing: 0.05em; color: var(--cream); text-decoration: none; }
+    .nav-logo span { color: var(--teal); }
+    .nav-links { display: flex; gap: 24px; margin-left: auto; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { background: var(--teal) !important; color: var(--navy) !important; font-weight: 700; font-size: 13px; padding: 9px 20px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; transition: opacity 0.15s; }
+    .nav-cta:hover { opacity: 0.88; }
+
+    .section { max-width: 900px; margin: 0 auto; padding: 80px 24px; }
+    .section-sm { max-width: 700px; margin: 0 auto; padding: 60px 24px; }
